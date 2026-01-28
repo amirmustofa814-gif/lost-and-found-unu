@@ -13,7 +13,7 @@
                     {{-- LOGIKA MENU DASHBOARD --}}
                     @if(Auth::user()->role === 'admin')
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                            {{ __('Admin Dashboard') }} 🛡️
+                            {{ __('Admin Dashboard') }}
                         </x-nav-link>
                     @else
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
