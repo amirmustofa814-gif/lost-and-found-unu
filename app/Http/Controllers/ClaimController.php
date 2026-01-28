@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Notifications\NewClaimNotification; 
-use App\Notifications\ClaimStatusUpdated;    
+// use App\Notifications\NewClaimNotification; // Aktifkan jika sudah ada notifikasi
+// use App\Notifications\ClaimStatusUpdated; 
 
 class ClaimController extends Controller
 {
@@ -21,51 +21,30 @@ class ClaimController extends Controller
     {
         $user = Auth::user();
 
-        // --- LOGIKA ADMIN ---
+        // 1. KLAIM MASUK (incomingClaims)
         if ($user->role === 'admin') {
-            // Admin melihat SEMUA klaim masuk
-            $incomingClaims = Claim::with(['foundItem', 'user'])->latest()->get();
-            
-            // Gunakan collect([]) agar dianggap Collection kosong
-            $myClaims = collect([]); 
-        } 
-        // --- LOGIKA USER BIASA ---
-        else {
-            // Incoming: Orang lain mengklaim barang saya
-            $incomingClaims = Claim::whereHas('foundItem', function ($query) {
-                $query->where('user_id', Auth::id());
-            })->with(['foundItem', 'user'])->latest()->get();
-
-            // Outgoing: Saya mengklaim barang orang lain
-            $myClaims = Claim::where('user_id', Auth::id())
-                            ->with(['foundItem'])
-                            ->latest()
-                            ->get();
+            // Admin melihat SEMUA klaim
+            $incomingClaims = Claim::with(['foundItem.primaryImage', 'foundItem.user', 'user'])
+                                   ->latest()
+                                   ->get();
+        } else {
+            // User Biasa: Melihat klaim orang lain terhadap barang yang DIA temukan
+            $incomingClaims = Claim::whereHas('foundItem', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->with(['foundItem.primaryImage', 'user'])->latest()->get();
         }
+
+        // 2. KLAIM SAYA (myClaims)
+        $myClaims = Claim::where('user_id', $user->id)
+                        ->with(['foundItem.primaryImage', 'foundItem.user'])
+                        ->latest()
+                        ->get();
 
         return view('claims.index', compact('incomingClaims', 'myClaims'));
     }
 
     /**
-     * Tampilkan Detail Klaim
-     */
-    public function show($id)
-    {
-        $claim = Claim::with(['foundItem', 'user', 'foundItem.user'])->findOrFail($id);
-
-        $isRequester = $claim->user_id === Auth::id();
-        $isFinder    = $claim->foundItem->user_id === Auth::id();
-        $isAdmin     = Auth::user()->role === 'admin';
-
-        if (!$isRequester && !$isFinder && !$isAdmin) {
-            abort(403, 'Anda tidak berhak melihat data klaim ini.');
-        }
-
-        return view('claims.show', compact('claim', 'isRequester', 'isFinder'));
-    }
-
-    /**
-     * Proses Pengajuan Klaim (+ Upload Foto Bukti)
+     * Proses Pengajuan Klaim
      */
     public function store(Request $request)
     {
@@ -75,9 +54,17 @@ class ClaimController extends Controller
             'proof_image'   => 'nullable|image|max:2048',
         ]);
 
+        // Cek Spam
+        $exists = Claim::where('user_id', Auth::id())
+                       ->where('found_item_id', $request->found_item_id)
+                       ->exists();
+        if ($exists) {
+            return back()->with('error', 'Anda sudah mengajukan klaim untuk barang ini.');
+        }
+
         $foundItem = FoundItem::findOrFail($request->found_item_id);
         if ($foundItem->user_id == Auth::id()) {
-            return back()->with('error', 'Anda tidak bisa mengklaim barang yang Anda temukan sendiri.');
+            return back()->with('error', 'Anda tidak bisa mengklaim barang temuan sendiri.');
         }
 
         $proofPath = null;
@@ -85,97 +72,74 @@ class ClaimController extends Controller
             $proofPath = $request->file('proof_image')->store('claim_proofs', 'public');
         }
 
-        $claim = Claim::create([
+        Claim::create([
             'found_item_id'    => $request->found_item_id,
             'user_id'          => Auth::id(),
             'description'      => $request->description,
             'proof_image_path' => $proofPath,
             'status'           => 'pending',
         ]);
-
-        // --- KIRIM NOTIFIKASI KE PENEMU BARANG ---
-        $finder = $foundItem->user;
-        if ($finder) {
-            $finder->notify(new NewClaimNotification($claim));
-        }
-
-        return back()->with('success', 'Klaim berhasil diajukan! Tunggu verifikasi dari penemu.');
+        
+        return back()->with('success', 'Klaim berhasil diajukan! Tunggu respon dari penemu.');
     }
 
     /**
-     * Aksi Verifikasi (Terima dengan Foto Serah Terima ATAU Tolak)
-     * Menggabungkan logika verify dan reject dalam satu fungsi
+     * PROSES VERIFIKASI (Approve / Reject / Verify)
      */
     public function verify(Request $request, $id)
     {
         $claim = Claim::with('foundItem')->findOrFail($id);
         $foundItem = $claim->foundItem;
+        $action = $request->input('action'); 
 
-        // Cek Hak Akses (Hanya Admin atau Penemu Asli)
-        if (Auth::user()->role !== 'admin' && Auth::id() !== $foundItem->user_id) {
-            abort(403, 'Anda tidak berhak memproses klaim ini.');
+        // --- 1. PENEMU MENYETUJUI (APPROVE) ---
+        if ($action === 'approve') {
+            if (Auth::id() !== $foundItem->user_id) {
+                abort(403, 'Hanya penemu barang yang berhak menyetujui tahap awal.');
+            }
+            $claim->update(['status' => 'approved']);
+            return back()->with('success', 'Klaim disetujui! Menunggu Admin untuk memproses serah terima.');
         }
 
-        // --- SKENARIO 1: TERIMA KLAIM (VERIFY) ---
-        if ($request->action === 'verify') {
-            
-            // 1. Validasi Wajib Foto Serah Terima
+        // --- 2. ADMIN MENYELESAIKAN (VERIFY) ---
+        if ($action === 'verify') {
+            if (Auth::user()->role !== 'admin') {
+                abort(403, 'Hanya Admin yang dapat memfinalisasi transaksi.');
+            }
+
             $request->validate([
-                'handover_photo' => 'required|image|max:4096' // Maks 4MB
-            ], [
-                'handover_photo.required' => 'Foto serah terima wajib diupload sebagai bukti!'
+                'handover_photo' => 'required|image|max:4096'
             ]);
 
-            DB::transaction(function() use ($request, $claim, $foundItem) {
-                
-                // 2. Simpan Foto Serah Terima
-                $handoverPath = $request->file('handover_photo')->store('handover_proofs', 'public');
+            $handoverPath = $request->file('handover_photo')->store('handover_proofs', 'public');
 
-                // 3. Update Status Klaim
+            DB::transaction(function() use ($claim, $foundItem, $handoverPath) {
                 $claim->update([
                     'status' => 'verified',
                     'verified_at' => now(),
                     'verified_by' => Auth::id(),
-                    'handover_photo_path' => $handoverPath // Simpan path foto
+                    'handover_photo_path' => $handoverPath
                 ]);
 
-                // 4. Update Status Barang Temuan jadi 'diambil'
                 $foundItem->update(['status' => 'diambil']);
 
-                // 5. Update Status Barang Hilang si Pengklaim (Fitur Cerdas)
-                LostItem::where('user_id', $claim->user_id)
-                    ->where('category_id', $foundItem->category_id)
-                    ->where('status', 'dicari')
-                    ->update(['status' => 'ditemukan']);
-
-                // 6. Otomatis tolak klaim lain untuk barang yang sama
-                $otherClaims = Claim::where('found_item_id', $foundItem->id)
-                    ->where('id', '!=', $claim->id)
-                    ->get();
-                
-                foreach ($otherClaims as $otherClaim) {
-                    $otherClaim->update(['status' => 'rejected']);
-                    // Opsional: Kirim notifikasi penolakan ke user lain
-                    $otherClaim->user->notify(new ClaimStatusUpdated($otherClaim, 'rejected'));
-                }
+                Claim::where('found_item_id', $foundItem->id)
+                     ->where('id', '!=', $claim->id)
+                     ->update(['status' => 'rejected']);
             });
 
-            // --- KIRIM NOTIFIKASI DITERIMA KE PENGKLAIM ---
-            $claim->user->notify(new ClaimStatusUpdated($claim, 'verified'));
-
-            return back()->with('success', '✅ Klaim DITERIMA! Foto serah terima berhasil disimpan & status barang diperbarui.');
+            return back()->with('success', 'Transaksi Selesai! Bukti tersimpan & status barang diperbarui.');
         }
 
-        // --- SKENARIO 2: TOLAK KLAIM (REJECT) ---
-        if ($request->action === 'reject') {
+        // --- 3. TOLAK KLAIM (REJECT) ---
+        if ($action === 'reject') {
+            if (Auth::user()->role !== 'admin' && Auth::id() !== $foundItem->user_id) {
+                abort(403);
+            }
             $claim->update(['status' => 'rejected']);
-            
-            // --- KIRIM NOTIFIKASI DITOLAK KE PENGKLAIM ---
-            $claim->user->notify(new ClaimStatusUpdated($claim, 'rejected'));
-
-            return back()->with('success', '❌ Klaim telah DITOLAK.');
+            return back()->with('success', 'Klaim telah DITOLAK.');
         }
 
-        return back();
+        return back()->with('error', 'Aksi tidak dikenali.');
     }
 }
