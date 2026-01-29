@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            ✏️ {{ __('Edit Laporan Kehilangan') }}
+             {{ __('Edit Laporan Kehilangan') }}
         </h2>
     </x-slot>
 
@@ -42,6 +42,12 @@
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Hilang</label>
                             <input type="date" name="date_lost" value="{{ old('date_lost', $lostItem->date_lost) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        </div>
+
+                        {{-- Input Nomor HP --}}
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Nomor HP / WhatsApp</label>
+                            <input type="text" name="phone_number" value="{{ old('phone_number', $lostItem->phone_number) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                         </div>
 
                         {{-- Deskripsi --}}

@@ -11,11 +11,10 @@ use Illuminate\Support\Facades\Storage;
 class LostItemController extends Controller
 {
     /**
-     * Menampilkan daftar barang hilang milik User
+     * Menampilkan daftar barang hilang milik User (atau semua jika Admin)
      */
     public function index()
     {
-        // LOGIKA: Admin lihat semua, User lihat punya sendiri
         if (Auth::user()->role === 'admin') {
             $lostItems = LostItem::with('primaryImage')->latest()->get();
         } else {
@@ -47,9 +46,9 @@ class LostItemController extends Controller
             'category_id'   => 'required|exists:categories,id',
             'date_lost'     => 'required|date',
             'location_lost' => 'required|string|max:255',
-            'phone_number'  => 'required|string|max:15', // Validasi Nomor HP
+            'phone_number'  => 'required|string|max:15',
             'description'   => 'required|string',
-            'images.*'      => 'image|mimes:jpeg,png,jpg|max:2048'
+            'images.*'      => 'image|mimes:jpeg,png,jpg|max:2048' // Validasi banyak gambar
         ]);
 
         $lostItem = LostItem::create([
@@ -57,13 +56,14 @@ class LostItemController extends Controller
             'category_id'   => $request->category_id,
             'item_name'     => $request->item_name,
             'description'   => $request->description,
-            'phone_number'  => $request->phone_number, // Simpan Nomor HP
-            'location_lost' => $request->location_lost,
+            'phone_number'  => $request->phone_number,
+            'location_lost' => $request->location_lost, // Pastikan kolom database sesuai (location / location_lost)
             'date_lost'     => $request->date_lost,
             'status'        => 'dicari',
             'created_by'    => Auth::id(),
         ]);
 
+        // Simpan Multiple Images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('lost_images', 'public');
@@ -78,13 +78,22 @@ class LostItemController extends Controller
     }
 
     /**
+     * Tampilkan Detail Barang
+     */
+    public function show($id)
+    {
+        $lostItem = LostItem::with(['images', 'category'])->findOrFail($id);
+        return view('lost.show', compact('lostItem'));
+    }
+
+    /**
      * Tampilkan Form Edit
      */
     public function edit($id)
     {
         $lostItem = LostItem::findOrFail($id);
 
-        // Keamanan: Cek apakah yang edit adalah pemilik asli atau admin
+        // Keamanan: Cek pemilik atau admin
         if ($lostItem->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
             abort(403, 'Anda tidak memiliki akses untuk mengedit laporan ini.');
         }
@@ -98,60 +107,54 @@ class LostItemController extends Controller
     public function update(Request $request, $id)
     {
         $lostItem = LostItem::findOrFail($id);
-
-        // Validasi lagi hak akses
+        // dd($request->all());
+        // Validasi Hak Akses
         if ($lostItem->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
             abort(403);
         }
 
+        // Validasi Input
         $request->validate([
             'item_name'     => 'required|string|max:255',
             'category_id'   => 'required|exists:categories,id',
             'location_lost' => 'required|string|max:255',
             'date_lost'     => 'required|date',
-            'phone_number'  => 'required|string|max:15', // Validasi Nomor HP
+            'phone_number'  => 'required|string|max:15',
             'description'   => 'required|string',
-            'image'         => 'nullable|image|max:2048', // Validasi single image untuk edit
+            'image'         => 'nullable|image|max:2048', // Validasi Single Image (image bukan images)
         ]);
 
-        // Logika Update Gambar (Jika ada upload baru)
+        // 1. Logika Ganti Foto (Jika user upload foto baru)
         if ($request->hasFile('image')) {
-            // 1. Hapus gambar lama dari storage & database jika ada
+            // Hapus gambar lama dari storage & database
             if ($lostItem->primaryImage) {
-                Storage::disk('public')->delete($lostItem->primaryImage->image_path);
+                if (Storage::disk('public')->exists($lostItem->primaryImage->image_path)) {
+                    Storage::disk('public')->delete($lostItem->primaryImage->image_path);
+                }
                 $lostItem->primaryImage()->delete();
             }
 
-            // 2. Upload gambar baru
+            // Simpan gambar baru
             $path = $request->file('image')->store('lost_images', 'public');
             
-            // 3. Simpan ke tabel relasi images (Set sebagai primary)
+            // Masukkan ke database sebagai foto utama baru
             $lostItem->images()->create([
                 'image_path' => $path, 
                 'is_primary' => true
             ]);
         }
 
-        // Update Data Teks termasuk Nomor HP
+        // 2. Update Data Teks
         $lostItem->update([
             'item_name'     => $request->item_name,
             'category_id'   => $request->category_id,
             'location_lost' => $request->location_lost,
             'date_lost'     => $request->date_lost,
-            'phone_number'  => $request->phone_number, // Update Nomor HP
+            'phone_number'  => $request->phone_number,
             'description'   => $request->description,
         ]);
 
         return redirect()->route('lost.show', $lostItem->id)->with('success', 'Laporan berhasil diperbarui!');
-    }
-
-    /**
-     * Detail Barang
-     */
-    public function show($id)
-    {
-        $lostItem = LostItem::with(['images', 'category'])->findOrFail($id);
-        return view('lost.show', compact('lostItem'));
     }
 
     /**
@@ -161,15 +164,19 @@ class LostItemController extends Controller
     {
         $lostItem = LostItem::findOrFail($id);
 
-        // Update Keamanan: Izinkan Admin juga untuk menghapus
+        // Keamanan
         if ($lostItem->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
             abort(403);
         }
 
+        // Hapus semua file gambar dari storage
         foreach($lostItem->images as $img) {
-            Storage::disk('public')->delete($img->image_path);
+            if (Storage::disk('public')->exists($img->image_path)) {
+                Storage::disk('public')->delete($img->image_path);
+            }
         }
 
+        // Hapus record dari database
         $lostItem->delete();
 
         return redirect()->route('lost.index')->with('success', 'Laporan berhasil dihapus.');

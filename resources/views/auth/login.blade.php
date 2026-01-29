@@ -19,7 +19,7 @@
         {{-- Header / Logo Area --}}
         <div class="bg-indigo-600 p-8 text-center">
             <div class="mx-auto bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <span class="text-3xl">🔍</span>
+                <span class="text-3xl"></span>
             </div>
             <h2 class="text-2xl font-bold text-white tracking-wide">Lost & Found</h2>
             <p class="text-indigo-200 text-sm mt-1">Sistem Informasi Barang Hilang Kampus</p>

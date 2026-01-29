@@ -2,9 +2,18 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+               <div class="shrink-0 flex items-center">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-0,5">
+        
+                {{-- 1. Gambar Logo --}}
+                <img src="{{ asset('img/logo-unu.png') }}" class="block h-12 w-auto" alt="Logo UNU">
+        
+                {{-- 2. Teks Nama Aplikasi (Gaya Kapur/Sketsa) --}}
+                <div class="flex flex-col">
+                                <span class="font-chalk text-2x2 text-gray-800 dark:text-white tracking-widest" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                                lost & found
+                            </span>
+                        </div>
                     </a>
                 </div>
 
@@ -89,7 +98,7 @@
         <div class="pt-2 pb-3 space-y-1">
             @if(Auth::user()->role === 'admin')
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                    {{ __('Admin Dashboard') }} 🛡️
+                    {{ __('Admin Dashboard') }} 
                 </x-responsive-nav-link>
             @else
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">

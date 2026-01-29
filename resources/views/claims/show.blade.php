@@ -34,7 +34,7 @@
                 {{-- Detail Info Klaim --}}
                 <div class="md:w-1/2 p-6">
                     <h3 class="text-2xl font-bold mb-1">{{ $claim->foundItem->item_name }}</h3>
-                    <p class="text-gray-600 mb-4 text-sm">📍 Ditemukan di: {{ $claim->foundItem->location_found }}</p>
+                    <p class="text-gray-600 mb-4 text-sm"> Ditemukan di: {{ $claim->foundItem->location_found }}</p>
 
                     <hr class="my-4 border-gray-200">
 
@@ -51,7 +51,7 @@
                     {{-- TAMPILKAN FOTO BUKTI (FITUR BARU) --}}
                     @if($claim->proof_image)
                         <div class="mt-4 border p-3 rounded-lg bg-gray-50">
-                            <span class="text-xs font-bold text-gray-500 block mb-2 uppercase">📸 Foto Bukti Kepemilikan:</span>
+                            <span class="text-xs font-bold text-gray-500 block mb-2 uppercase"> Foto Bukti Kepemilikan:</span>
                             <a href="{{ asset('storage/' . $claim->proof_image) }}" target="_blank">
                                 <img src="{{ asset('storage/' . $claim->proof_image) }}" alt="Bukti Foto" class="w-full rounded shadow hover:opacity-90 transition cursor-zoom-in">
                             </a>

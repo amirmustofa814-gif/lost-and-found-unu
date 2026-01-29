@@ -101,13 +101,13 @@
                                                     {{ $item->item_name }}
                                                 </h4>
                                                 <div class="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                                                    <span>🏷️</span> {{ $item->category->name ?? 'Umum' }}
+                                                    <span></span> {{ $item->category->name ?? 'Umum' }}
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[2.5em]">
-                                            <span class="mr-1">📍</span> Di {{ $item->location_found }}
+                                            <span class="mr-1"></span> Di {{ $item->location_found }}
                                         </div>
 
                                         <div class="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">

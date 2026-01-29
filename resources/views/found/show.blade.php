@@ -32,7 +32,7 @@
                             
                             {{-- Tombol Zoom --}}
                             <a :href="activeImage" target="_blank" class="absolute bottom-4 right-4 bg-white/90 text-gray-800 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:bg-white transition flex items-center gap-2 backdrop-blur-sm z-10">
-                                🔍 Lihat Foto Asli
+                                 Lihat Foto Asli
                             </a>
                         </div>
 
@@ -109,7 +109,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             {{-- Tanggal & Jam Ditemukan --}}
                             <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                <p class="text-xs text-gray-500 uppercase font-bold tracking-wide mb-1 flex items-center gap-1">📅 Waktu Ditemukan</p>
+                                <p class="text-xs text-gray-500 uppercase font-bold tracking-wide mb-1 flex items-center gap-1"> Waktu Ditemukan</p>
                                 
                                 <p class="text-gray-900 font-semibold text-lg">
                                     {{ \Carbon\Carbon::parse($foundItem->date_found)->translatedFormat('d F Y') }}
@@ -123,12 +123,12 @@
                             </div>
 
                             <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                <p class="text-xs text-gray-500 uppercase font-bold tracking-wide mb-1 flex items-center gap-1">📍 Lokasi Penemuan</p>
+                                <p class="text-xs text-gray-500 uppercase font-bold tracking-wide mb-1 flex items-center gap-1"> Lokasi Penemuan</p>
                                 <p class="text-gray-900 font-semibold">{{ $foundItem->location_found }}</p>
                             </div>
                             
                             <div class="md:col-span-2 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                <p class="text-xs text-indigo-600 uppercase font-bold tracking-wide mb-1 flex items-center gap-1">📌 Posisi Barang Sekarang</p>
+                                <p class="text-xs text-indigo-600 uppercase font-bold tracking-wide mb-1 flex items-center gap-1"> Posisi Barang Sekarang</p>
                                 <p class="text-indigo-900 font-bold text-lg">{{ $foundItem->current_position ?? '-' }}</p>
                             </div>
                         </div>
@@ -148,12 +148,12 @@
                             {{-- Jika Pemilik --}}
                             <div class="flex gap-3">
                                 <a href="{{ route('found.edit', $foundItem->id) }}" class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3.5 px-4 rounded-xl text-center transition shadow-sm hover:shadow-md flex justify-center items-center gap-2">
-                                    ✏️ Edit Data
+                                     Edit Data
                                 </a>
                                 <form action="{{ route('found.destroy', $foundItem->id) }}" method="POST" class="flex-1" onsubmit="return confirm('Yakin ingin menghapus?');">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3.5 px-4 rounded-xl text-center transition flex justify-center items-center gap-2">
-                                        🗑️ Hapus
+                                         Hapus
                                     </button>
                                 </form>
                             </div>
@@ -183,7 +183,7 @@
                                         </div>
 
                                         <div class="flex gap-3 pt-2">
-                                            <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-md">🚀 Kirim Pengajuan</button>
+                                            <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-md"> Kirim Pengajuan</button>
                                             <button type="button" @click="open = false" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition">Batal</button>
                                         </div>
                                     </form>

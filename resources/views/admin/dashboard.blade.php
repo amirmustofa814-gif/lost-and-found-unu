@@ -62,7 +62,7 @@
                                     {{-- TOMBOL LIHAT DETAIL --}}
                                     <td class="p-3">
                                         <a href="{{ route('admin.users.show', $user->id) }}" class="inline-flex items-center px-3 py-1 bg-indigo-50 dark:bg-indigo-900 border border-indigo-200 dark:border-indigo-700 rounded-full text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-800 transition">
-                                            👁️ Detail
+                                             Detail
                                         </a>
                                     </td>
                                 </tr>

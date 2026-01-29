@@ -15,7 +15,7 @@ class Claim extends Model
         'user_id',
         'status',
         'description',
-        'proof_image_path',  // <--- KOREKSI: Harus 'proof_image_path' (Sesuai Controller)
+        'proof_image_path',  
         'handover_photo_path',
         'verified_at',
         'verified_by',
