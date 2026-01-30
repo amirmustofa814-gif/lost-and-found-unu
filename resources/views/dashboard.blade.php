@@ -5,6 +5,63 @@
         </h2>
     </x-slot>
 
+    @php
+        // Ambil klaim milik user yang statusnya 'approved' (Disetujui) atau 'rejected' (Ditolak)
+        // Kita ambil langsung dari Model Claim agar tidak perlu ubah Controller
+        $myNotifications = \App\Models\Claim::with('foundItem')
+                            ->where('user_id', Auth::id())
+                            ->whereIn('status', ['approved', 'rejected']) // Hanya ambil yg penting
+                            ->latest()
+                            ->get();
+    @endphp
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            
+            {{-- TAMPILKAN ALERT JIKA ADA NOTIFIKASI --}}
+            @if($myNotifications->count() > 0)
+                <div class="mb-8 space-y-3">
+                    @foreach($myNotifications as $notif)
+                        
+                        {{-- 1. NOTIFIKASI DISETUJUI (PENTING) --}}
+                        @if($notif->status == 'approved')
+                            <div class="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-r shadow-sm flex flex-col md:flex-row justify-between items-center animate-pulse">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl"></span>
+                                    <div>
+                                        <p class="font-bold text-blue-800 dark:text-blue-200">Kabar Baik! Klaim Disetujui</p>
+                                        <p class="text-sm text-blue-600 dark:text-blue-300">
+                                            Klaim kamu untuk barang <strong>"{{ $notif->foundItem->item_name }}"</strong> telah disetujui penemu.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="mt-2 md:mt-0">
+                                    <a href="{{ route('claims.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow transition">
+                                         Hubungi Penemu
+                                    </a>
+                                </div>
+                            </div>
+
+                        {{-- 2. NOTIFIKASI DITOLAK --}}
+                        @elseif($notif->status == 'rejected')
+                            <div class="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 rounded-r shadow-sm flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">❌</span>
+                                    <div>
+                                        <p class="font-bold text-red-800 dark:text-red-200">Klaim Ditolak</p>
+                                        <p class="text-sm text-red-600 dark:text-red-300">
+                                            Maaf, klaim untuk barang <strong>"{{ $notif->foundItem->item_name }}"</strong> ditolak. Cek detailnya.
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('claims.index') }}" class="text-red-600 dark:text-red-400 font-bold hover:underline text-sm">Lihat Detail →</a>
+                            </div>
+                        @endif
+
+                    @endforeach
+                </div>
+            @endif
+
     <div class="py-6 bg-gray-50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             

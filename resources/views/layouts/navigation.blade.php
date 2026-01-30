@@ -3,19 +3,26 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                <div class="shrink-0 flex items-center">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-0,5">
-        
-                {{-- 1. Gambar Logo --}}
-                <img src="{{ asset('img/logo-unu.png') }}" class="block h-12 w-auto" alt="Logo UNU">
-        
-                {{-- 2. Teks Nama Aplikasi (Gaya Kapur/Sketsa) --}}
-                <div class="flex flex-col">
-                                <span class="font-chalk text-2x2 text-gray-800 dark:text-white tracking-widest" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
-                                lost & found
-                            </span>
-                        </div>
-                    </a>
-                </div>
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2 sm:gap-3">
+
+                        {{-- 1. Gambar Logo (Ukuran menyesuaikan HP/Laptop) --}}
+                        <img src="{{ asset('img/logo-unu.png') }}" class="block h-10 sm:h-12 w-auto" alt="Logo UNU">
+
+                        {{-- 2. Teks Nama Aplikasi --}}
+                        <div class="flex flex-col">
+                            
+                        {{-- Judul Besar --}}
+                        <span class="font-chalk text-lg sm:text-2x2 text-gray-800 dark:text-white tracking-widest" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                            LOST & FOUND
+                        </span>
+
+                        {{-- Sub-judul (Hilang di HP agar rapi, Muncul di Laptop) --}}
+                        <span class="text-[10px] font-bold text-blue-900 uppercase tracking-widest -mt-1 hidden sm:block">
+                            UNU lampung
+                        </span>
+                    </div>
+                </a>
+            </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     

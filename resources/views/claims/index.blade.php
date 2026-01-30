@@ -197,7 +197,7 @@
                                                                         <div class="bg-red-50 p-3 rounded-lg border border-red-100">
                                                                             <h5 class="font-bold text-sm">{{ $matched->item_name }}</h5>
                                                                             <p class="text-xs text-gray-600">{{ Str::limit($matched->description, 50) }}</p>
-                                                                            <p class="text-[10px] mt-1 text-gray-500 mb-2"> {{ $matched->location ?? 'Tidak ada lokasi' }}</p>
+                                                                           <p class="text-[10px] mt-1 text-gray-500 mb-2"> {{ $matched->location_lost ?? 'Tidak ada lokasi' }}</p>
                                                                             
                                                                             {{-- FOTO DI BAWAH INFO --}}
                                                                             @if($matched->images->count() > 0)
