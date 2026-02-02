@@ -97,8 +97,11 @@ class LostItemController extends Controller
         if ($lostItem->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
             abort(403, 'Anda tidak memiliki akses untuk mengedit laporan ini.');
         }
+        
+        $categories = Category::all();
 
-        return view('lost.edit', compact('lostItem'));
+       
+        return view('lost.edit', compact('lostItem', 'categories'));
     }
 
     /**
