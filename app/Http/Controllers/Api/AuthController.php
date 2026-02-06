@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -16,12 +17,13 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // 1. Validasi Input
+        // 1. Validasi Input //
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'phone_number' => 'nullable|string|max:15',
+            'name'      => 'required',
+            'nim'       => 'required|unique:users',
+            'email'     => 'required|email|unique:users',
+            'phone_number' => 'required',
+            'password'  => 'required|min:8|confirmed'
         ]);
 
         if ($validator->fails()) {
@@ -32,22 +34,36 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // 2. Buat User Baru
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'phone_number' => $request->phone_number,
-            'role' => 'mahasiswa', // Default role
-        ]);
+        // 2. Buat Kode OTP //
+        $otp = rand(100000, 999999);
 
-        // 3. Buat Token API
+        // 3. Buat User Baru //
+        $user = User::create([
+            'name'      => $request->name,
+            'nim'       => $request->nim,
+            'email'     => $request->email,
+            'phone_number' => $request->phone_number,
+            'password'  => Hash::make($request->password),
+            'role'      => 'mahasiswa',
+            'otp_code'  => $otp, 
+        ]);
+       
+        try {
+            Http::post('http://localhost:3000/send/message', [
+                'phone' => $user->phone_number,
+                'message' => "Halo {$user->name}, Kode Verifikasi OTP Anda: *{$otp}*",
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Gagal kirim WA di API: ' . $e->getMessage());
+        }
+
+        // 4. Buat Token API //
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // 4. Return Response JSON
+        // 5. Return Response JSON //
         return response()->json([
             'status' => 'success',
-            'message' => 'Registrasi berhasil',
+            'message' => 'Registrasi berhasil. Kode OTP dikirim ke WhatsApp.',
             'data' => [
                 'user' => $user,
                 'access_token' => $token,
@@ -56,12 +72,10 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Login User
-     */
+    // >>(Fungsi login, logout, userProfile tetap sama, tidak perlu diubah)<< //
+    
     public function login(Request $request)
     {
-        // 1. Validasi hanya email & password
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'status' => 'error',
@@ -69,10 +83,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // 2. Ambil data user jika login sukses
         $user = User::where('email', $request->email)->firstOrFail();
-
-        // 3. Buat Token Baru
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -86,12 +97,8 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * Logout (Hapus Token)
-     */
     public function logout(Request $request)
     {
-        // Hapus token yang sedang dipakai saat ini
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
@@ -100,9 +107,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Cek Profile User (Untuk mengetes Token valid/tidak)
-     */
     public function userProfile(Request $request)
     {
         return response()->json([

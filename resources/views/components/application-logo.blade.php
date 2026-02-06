@@ -1,4 +1,4 @@
-<img src="{{ asset('img/logo-unu.png') }}" alt="UNU Lost & Found" {{ $attributes }}>
+<img src="{{ asset('img/logo-unu.png') }}" alt="UNU Lost & Found" class="h-24 w-auto object-contain">
     {{-- Lingkaran Kaca Pembesar --}}
     <circle cx="20" cy="20" r="16" stroke="#4F46E5" stroke-width="4"/>
     

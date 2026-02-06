@@ -22,7 +22,7 @@ class RegisteredUserController extends Controller
 
  public function store(Request $request)
     {
-        // 1. VALIDASI INPUT
+        // 1. VALIDASI INPUT //
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'nim' => ['required', 'string', 'max:20', 'unique:'.User::class],
@@ -31,10 +31,10 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // 2. BUAT KODE OTP
+        // 2. BUAT KODE OTP //
         $otp = rand(100000, 999999);
 
-        // 3. SIMPAN DATA USER
+        // 3. SIMPAN DATA USER //
         $user = User::create([
             'name' => $request->name,
             'nim' => $request->nim,
@@ -45,17 +45,17 @@ class RegisteredUserController extends Controller
             'role' => 'mahasiswa',
         ]);
 
-        // 4. FORMAT NOMOR HP
+        // 4. FORMAT NOMOR HP //
         $nomor_hp = $this->formatNomorHp($request->phone_number);
 
-        // 5. KIRIM PESAN WA (FINAL & RAPI)
+        // 5. KIRIM PESAN WA (FINAL & RAPI) //
         try {
             Http::post('http://localhost:3000/send/message', [
                 'phone' => $nomor_hp,
                 'message' => "Halo {$user->name}, Kode Verifikasi Anda: *{$otp}*",
             ]);
         } catch (\Exception $e) {
-            // Kalau gagal, catat di log saja
+            // Kalau gagal, catat di log saja //
             \Log::error('Gagal WA: ' . $e->getMessage());
         }
 
@@ -63,13 +63,13 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // Redirect ke halaman Input OTP
+        // Redirect ke halaman Input OTP //
         return view('auth.verify-otp-inline', ['user' => $user]);
     }
-    // Fungsi Kecil untuk mengubah 0812... jadi 62812...
+    // Fungsi Kecil untuk mengubah 0812... jadi 62812... //
     private function formatNomorHp($nomor)
     {
-        $nomor = preg_replace('/[^0-9]/', '', $nomor); // Hapus spasi/strip
+        $nomor = preg_replace('/[^0-9]/', '', $nomor);
         if (substr($nomor, 0, 2) === '08') {
             return '62' . substr($nomor, 1);
         }
