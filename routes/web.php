@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\LostItemController;
@@ -70,6 +71,8 @@ Route::middleware('auth')->group(function () {
     // --- 4. RUTE KECOCOKAN (SMART MATCH) ---
     Route::get('/matches', [MatchController::class, 'index'])->name('match.index');
 
+    Route::get('/verify-otp', [OtpController::class, 'show'])->name('otp.show');
+    Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.verify');
 }); 
 
 
@@ -84,6 +87,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
     Route::get('/admin/users/{id}', [AdminController::class, 'showUser'])->name('admin.users.show');
 
     Route::delete('/admin/users/{id}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
+
 });
 
 require __DIR__.'/auth.php';

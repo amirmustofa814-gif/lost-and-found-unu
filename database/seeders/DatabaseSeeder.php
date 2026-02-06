@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Mahasiswa Test',
             'email' => 'mhs@kampus.ac.id',
-            'role' => 'mahasiswa', // <--- Sesuai dengan migrasi kamu
+            'role' => 'mahasiswa', 
             'phone_number' => '089876543210',
             'password' => Hash::make('password123'),
         ]);

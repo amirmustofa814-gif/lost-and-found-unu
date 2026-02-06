@@ -1,0 +1,84 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Lost & Found",
+        "description": "Dokumentasi API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api",
+            "description": "Local Server"
+        }
+    ],
+    "paths": {
+        "/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register User Baru",
+                "description": "Mendaftarkan user dan kirim OTP",
+                "operationId": "register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "nim",
+                                    "email",
+                                    "phone_number",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Budi"
+                                    },
+                                    "nim": {
+                                        "type": "string",
+                                        "example": "12345"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "budi@email.com"
+                                    },
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "08123456789"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "pass123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "pass123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sukses Register"
+                    },
+                    "422": {
+                        "description": "Gagal Validasi"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        }
+    ]
+}

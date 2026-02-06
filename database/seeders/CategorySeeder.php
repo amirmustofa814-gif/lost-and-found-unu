@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str; // <--- Penting: Tambahkan ini untuk bikin slug
+use Illuminate\Support\Str;
 
 class CategorySeeder extends Seeder
 {
@@ -23,7 +23,7 @@ class CategorySeeder extends Seeder
         foreach ($categories as $cat) {
             Category::create([
                 'name' => $cat,
-                'slug' => Str::slug($cat) // <--- Ini solusinya: Buat slug otomatis
+                'slug' => Str::slug($cat) 
             ]);
         }
     }
