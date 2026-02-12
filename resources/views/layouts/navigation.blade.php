@@ -2,42 +2,44 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-               <div class="shrink-0 flex items-center">
+                <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}" class="flex items-center gap-2 sm:gap-3">
 
-                        {{-- 1. Gambar Logo (Ukuran menyesuaikan HP/Laptop) --}}
+                        {{-- 1. Gambar Logo --}}
                         <img src="{{ asset('img/logo-unu.png') }}" class="block h-10 sm:h-12 w-auto" alt="Logo UNU">
 
                         {{-- 2. Teks Nama Aplikasi --}}
                         <div class="flex flex-col">
-                            
-                        {{-- Judul Besar --}}
-                        <span class="font-chalk text-lg sm:text-2x2 text-gray-800 dark:text-white tracking-widest" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
-                            LOST & FOUND
-                        </span>
+                            {{-- Judul Besar --}}
+                            <span class="font-chalk text-xl sm:text-1xl text-gray-800 dark:text-white tracking-widest" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                                LOST & FOUND
+                            </span>
 
-                        {{-- Sub-judul (Hilang di HP agar rapi, Muncul di Laptop) --}}
-                        <span class="text-[10px] font-bold text-blue-900 uppercase tracking-widest -mt-1 hidden sm:block">
-                            UNU lampung
-                        </span>
-                    </div>
-                </a>
-            </div>
+                            {{-- Sub-judul --}}
+                            <span class="text-[11px] font-bold text-blue-900 uppercase tracking-widest -mt-1 hidden sm:block">
+                                UNU lampung
+                            </span>
+                        </div>
+                    </a>
+                </div>
 
+                {{-- ▼▼▼ MENU DESKTOP ▼▼▼ --}}
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     
-                    {{-- LOGIKA MENU DASHBOARD --}}
-                    @if(Auth::user()->role === 'admin')
+                    {{-- LOGIKA MENU DASHBOARD (SPATIE) --}}
+                    @role('admin')
+                        {{-- Jika Login sebagai ADMIN --}}
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                             {{ __('Admin Dashboard') }}
                         </x-nav-link>
                     @else
+                        {{-- Jika Login sebagai MAHASISWA/USER BIASA --}}
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
                         </x-nav-link>
-                    @endif
+                    @endrole
 
-                    {{-- MENU UMUM (Muncul untuk Admin & Mahasiswa) --}}
+                    {{-- MENU UMUM (Muncul untuk Semua) --}}
                     <x-nav-link :href="route('lost.index')" :active="request()->routeIs('lost.*')">
                         {{ __('Barang Hilang') }}
                     </x-nav-link>
@@ -56,14 +58,17 @@
                 </div>
             </div>
 
+            {{-- DROPDOWN PROFILE (KANAN ATAS) --}}
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
-                            @if(Auth::user()->role === 'admin')
+                            
+                            {{-- Badge Admin (Spatie Logic) --}}
+                            @role('admin')
                                 <span class="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">ADMIN</span>
-                            @endif
+                            @endrole
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -90,6 +95,7 @@
                 </x-dropdown>
             </div>
 
+            {{-- TOMBOL HAMBURGER (MOBILE) --}}
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -101,9 +107,12 @@
         </div>
     </div>
 
+    {{-- ▼▼▼ MENU MOBILE (RESPONSIVE) ▼▼▼ --}}
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            @if(Auth::user()->role === 'admin')
+            
+            {{-- Logic Dashboard Mobile (Spatie) --}}
+            @role('admin')
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                     {{ __('Admin Dashboard') }} 
                 </x-responsive-nav-link>
@@ -111,7 +120,7 @@
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('Dashboard') }}
                 </x-responsive-nav-link>
-            @endif
+            @endrole
 
             <x-responsive-nav-link :href="route('lost.index')" :active="request()->routeIs('lost.*')">
                 {{ __('Barang Hilang') }}

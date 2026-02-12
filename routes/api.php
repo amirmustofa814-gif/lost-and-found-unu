@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\LostItemController;
 use App\Http\Controllers\Api\FoundItemController;
 use App\Http\Controllers\Api\MatchController;
 use App\Http\Controllers\Api\ClaimController;
+use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\OtpController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,14 +54,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/matches', [MatchController::class, 'index']);
 
     // --- CLAIMS (Transaksi Klaim) ---
-    Route::get('/claims', [ClaimController::class, 'index']);                 // List klaim (masuk & keluar)
-    Route::post('/claims/{found_item_id}', [ClaimController::class, 'store']); // Ajukan klaim
-    Route::post('/claims/{claim_id}/verify', [ClaimController::class, 'verify']); // Terima klaim
-    Route::post('/claims/{claim_id}/reject', [ClaimController::class, 'reject']); // Tolak klaim
+    Route::get('/claims', [ClaimController::class, 'index']);                 
+    Route::post('/claims/{found_item_id}', [ClaimController::class, 'store']); 
+    Route::post('/claims/{claim_id}/verify', [ClaimController::class, 'verify']); 
+    Route::post('/claims/{claim_id}/reject', [ClaimController::class, 'reject']); 
 
     // --- MASTER DATA ---
     Route::get('/categories', function() {
         return response()->json(\App\Models\Category::all());
     });
-
+// ====================================================================
+    // 3. RBAC TEST ROUTES (Untuk Uji Coba Swagger)
+    // ====================================================================
+    // Endpoint ini yang akan kita tembak dari Swagger untuk tes Role
+    Route::get('/test/user-area', [TestController::class, 'userOnly']);
+    Route::get('/test/admin-area', [TestController::class, 'adminOnly']);
+    Route::post('/verify-otp', [OtpController::class, 'verify']);
 });

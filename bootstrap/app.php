@@ -13,19 +13,23 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
-       $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-        ]);
-        
-        // 1. Konfigurasi API Sanctum
+        $middleware->validateCsrfTokens(except: [
+            'api/*',       
+            'verify-otp',  
+            ]);
+        // 1. Konfigurasi API Sanctum (Tetap ada)
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        
         ]);
 
-        // 2. Alias Middleware (PERBAIKAN DI SINI)
-        // Kita gunakan class bawaan framework: Illuminate\Auth\Middleware\EnsureEmailIsVerified
-        $middleware->alias([
-            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+
+        // 2. Daftar Alias Middleware (Admin, Verified, & Pencegah Back History)
+       $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'prevent-back-history' => \App\Http\Middleware\PreventBackHistory::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -1,6 +1,9 @@
 <x-guest-layout>
     <form method="POST" action="{{ route('otp.verify') }}">
         @csrf
+        <input type="hidden" name="user_id" value="{{ $encryptedId }}">
+
+    </form>
         <div class="mb-4 text-sm text-gray-600">
             Kode OTP telah dikirim ke WhatsApp Anda. Silakan masukkan di bawah ini.
         </div>

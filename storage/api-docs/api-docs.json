@@ -2,61 +2,40 @@
     "openapi": "3.0.0",
     "info": {
         "title": "API Lost & Found",
-        "description": "Dokumentasi API",
+        "description": "Dokumentasi API Kampus",
+        "contact": {
+            "email": "admin@kampus.ac.id"
+        },
         "version": "1.0.0"
     },
     "servers": [
         {
-            "url": "http://127.0.0.1:8000/api",
-            "description": "Local Server"
+            "url": "http://127.0.0.1:8000",
+            "description": "API Server Lokal"
         }
     ],
     "paths": {
-        "/register": {
+        "/api/verify-otp": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Register User Baru",
-                "description": "Mendaftarkan user dan kirim OTP",
-                "operationId": "register",
+                "summary": "Verifikasi Kode OTP",
+                "description": "Masukkan kode OTP dari WhatsApp untuk verifikasi akun.",
+                "operationId": "127b295bd8b8c564f261a4cb095d5bc9",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
-                                    "nim",
-                                    "email",
-                                    "phone_number",
-                                    "password",
-                                    "password_confirmation"
+                                    "otp_code"
                                 ],
                                 "properties": {
-                                    "name": {
+                                    "otp_code": {
+                                        "description": "Kode 6 digit dari WA",
                                         "type": "string",
-                                        "example": "Budi"
-                                    },
-                                    "nim": {
-                                        "type": "string",
-                                        "example": "12345"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "example": "budi@email.com"
-                                    },
-                                    "phone_number": {
-                                        "type": "string",
-                                        "example": "08123456789"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "pass123"
-                                    },
-                                    "password_confirmation": {
-                                        "type": "string",
-                                        "example": "pass123"
+                                        "example": "123456"
                                     }
                                 },
                                 "type": "object"
@@ -66,12 +45,100 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Sukses Register"
+                        "description": "Verifikasi Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "example": "Nomor WhatsApp berhasil diverifikasi!"
+                                        },
+                                        "status": {
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
-                    "422": {
-                        "description": "Gagal Validasi"
+                    "400": {
+                        "description": "Kode OTP Salah / Kadaluarsa"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/test/user-area": {
+            "get": {
+                "tags": [
+                    "RBAC Test"
+                ],
+                "summary": "Cek Profil (Semua Role)",
+                "description": "Bisa diakses oleh admin maupun mahasiswa.",
+                "operationId": "25169806eb22a2e4ebb027fb8af22aea",
+                "responses": {
+                    "200": {
+                        "description": "Berhasil masuk",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "example": "Halo, ini profil anda"
+                                        },
+                                        "role": {
+                                            "example": "mahasiswa"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/test/admin-area": {
+            "get": {
+                "tags": [
+                    "RBAC Test"
+                ],
+                "summary": "Area Terlarang (Hanya Admin)",
+                "description": "Jika anda login sebagai mahasiswa, anda akan mendapat error 403.",
+                "operationId": "42225e0b3f6f622ce3b27fe34ff82d8d",
+                "responses": {
+                    "200": {
+                        "description": "Sukses: Anda adalah Admin"
+                    },
+                    "403": {
+                        "description": "Forbidden: Akses Ditolak (Bukan Admin)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Masukkan token login Anda di sini",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
             }
         }
     },
@@ -79,6 +146,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "RBAC Test",
+            "description": "RBAC Test"
         }
     ]
 }

@@ -12,10 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ClaimController extends Controller
 {
-    /**
-     * GET /api/claims
-     * Menampilkan dashboard klaim (Klaim Masuk & Klaim Saya)
-     */
+
+    public function getClaims() {}
     public function index()
     {
         // A. Klaim Masuk (Incoming): Orang lain klaim barang temuan SAYA
@@ -38,10 +36,6 @@ class ClaimController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/claims/{found_item_id}
-     * Ajukan Klaim Baru
-     */
     public function store(Request $request, $found_item_id)
     {
         $validator = Validator::make($request->all(), [
@@ -86,10 +80,7 @@ class ClaimController extends Controller
         }
     }
 
-    /**
-     * POST /api/claims/{claim_id}/verify
-     * Terima Klaim (Barang jadi milik pelapor)
-     */
+    
     public function verify($claim_id)
     {
         $claim = Claim::with('foundItem')->find($claim_id);
@@ -127,10 +118,7 @@ class ClaimController extends Controller
         }
     }
 
-    /**
-     * POST /api/claims/{claim_id}/reject
-     * Tolak Klaim
-     */
+    
     public function reject($claim_id)
     {
         $claim = Claim::with('foundItem')->find($claim_id);

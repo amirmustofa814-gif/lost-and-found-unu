@@ -10,10 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class MatchController extends Controller
 {
-    /**
-     * GET /api/matches
-     * Mencari kecocokan otomatis antara Barang Hilang User vs Database Barang Temuan
-     */
+   
     public function index()
     {
         // 1. Ambil barang yang SAYA cari (status 'dicari')

@@ -12,10 +12,7 @@ use Illuminate\Support\Facades\Validator;
 
 class LostItemController extends Controller
 {
-    /**
-     * GET /api/lost-items
-     * Menampilkan semua barang hilang (terbaru diatas)
-     */
+    
     public function index()
     {
         $lostItems = LostItem::with(['user', 'category', 'primaryImage'])
@@ -29,10 +26,7 @@ class LostItemController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/lost-items
-     * Membuat laporan kehilangan baru + Upload Foto
-     */
+    
     public function store(Request $request)
     {
         // 1. Validasi
@@ -93,10 +87,7 @@ class LostItemController extends Controller
         }
     }
 
-    /**
-     * GET /api/lost-items/{id}
-     * Lihat detail satu barang
-     */
+    
     public function show($id)
     {
         $lostItem = LostItem::with(['user', 'category', 'images'])->find($id);
@@ -111,10 +102,7 @@ class LostItemController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/lost-items/{id}
-     * Update data (misal ganti status jadi selesai)
-     */
+  
     public function update(Request $request, $id)
     {
         $lostItem = LostItem::find($id);
@@ -140,10 +128,6 @@ class LostItemController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/lost-items/{id}
-     * Hapus laporan
-     */
     public function destroy($id)
     {
         $lostItem = LostItem::find($id);

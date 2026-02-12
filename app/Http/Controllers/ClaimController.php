@@ -70,7 +70,7 @@ class ClaimController extends Controller
         // 1. APPROVE
         if ($action === 'approve') {
             if (Auth::id() !== $foundItem->user_id) abort(403);
-            $claim->update(['status' => 'approved']);
+            $claim->update(['status' => 'verified']);
             return back()->with('success', 'Klaim disetujui! Silakan upload bukti serah terima.');
         }
 

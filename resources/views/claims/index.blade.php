@@ -23,7 +23,7 @@
             @endif
 
             {{-- ========================================================== --}}
-            {{-- BAGIAN 1: KLAIM MASUK (Untuk Penemu / Admin)               --}}
+            {{-- BAGIAN 1: KLAIM MASUK (Untuk Penemu / Admin)              --}}
             {{-- ========================================================== --}}
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 dark:border-gray-700 mb-12">
                 <div class="p-6">
@@ -112,46 +112,69 @@
                                         {{-- STATUS --}}
                                         <td class="p-4 text-center">
                                             <span class="px-2 py-1 rounded text-xs font-bold 
-                                            {{ $claim->status == 'pending' ? 'bg-yellow-100 text-yellow-700' : ($claim->status == 'approved' ? 'bg-blue-100 text-blue-700' : ($claim->status == 'verified' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')) }}">
+                                            {{ $claim->status == 'pending' ? 'bg-yellow-100 text-yellow-700' : ($claim->status == 'verified' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700') }}">
                                                 {{ ucfirst($claim->status) }}
                                             </span>
                                         </td>
 
-                                        {{-- AKSI --}}
+                                        {{-- --------------------------------------------------------------- --}}
+                                        {{-- BAGIAN INI YANG SAYA UBAH TOTAL LOGIKANYA AGAR URUTANNYA BENAR --}}
+                                        {{-- --------------------------------------------------------------- --}}
                                         <td class="p-4 text-center">
                                             <div x-data="{ showModal: false }">
                                                 
-                                                {{-- 1. TOMBOL (PENEMU) --}}
-                                                @if($claim->status == 'pending' && Auth::id() === $claim->foundItem->user_id)
-                                                    <div class="flex items-center justify-center gap-2">
-                                                        <form action="{{ route('claims.verify', $claim->id) }}" method="POST"> @csrf @method('PATCH') <input type="hidden" name="action" value="approve"> <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg shadow text-xs font-bold"> Terima</button> </form>
-                                                        <form action="{{ route('claims.verify', $claim->id) }}" method="POST" onsubmit="return confirm('Tolak?');"> @csrf @method('PATCH') <input type="hidden" name="action" value="reject"> <button type="submit" class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-lg shadow font-bold">✕</button> </form>
-                                                        <button @click="showModal = true" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-lg shadow font-bold">👁️</button>
+                                                {{-- 1. KASUS DITOLAK --}}
+                                                @if($claim->status == 'rejected')
+                                                    <span class="text-red-600 text-lg font-bold">❌ Ditolak</span>
+
+                                                {{-- 2. KASUS SUDAH SELESAI (Status Verified + Ada Tanggal Verifikasi) --}}
+                                                @elseif($claim->status == 'verified' && $claim->verified_at)
+                                                    <div class="flex flex-col items-center">
+                                                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold border border-green-200">
+                                                            ✅ Selesai
+                                                        </span>
+                                                        <span class="text-[10px] text-gray-400 mt-1">
+                                                            {{ \Carbon\Carbon::parse($claim->verified_at)->format('d/m/y H:i') }}
+                                                        </span>
+                                                        <button @click="showModal = true" class="text-blue-500 text-[10px] underline mt-1">Lihat Bukti</button>
                                                     </div>
 
-                                                {{-- 2. TOMBOL (ADMIN) --}}
-                                                @elseif($claim->status == 'approved')
+                                                {{-- 3. KASUS MENUNGGU PENEMU UPLOAD (Status Verified + Belum Ada Foto) --}}
+                                                @elseif($claim->status == 'verified' && !$claim->handover_photo_path)
                                                     @if(Auth::id() === $claim->foundItem->user_id)
-                                                        <button @click="showModal = true" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg shadow text-xs font-bold animate-pulse"> Upload Bukti</button>
-                                                    @elseif(Auth::user()->role === 'admin')
-                                                        <button @click="showModal = true" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg shadow text-xs font-bold {{ !$claim->handover_photo_path ? 'opacity-50 cursor-not-allowed' : 'animate-pulse' }}">
-                                                            {{ $claim->handover_photo_path ? '✅ Verifikasi' : ' Menunggu Bukti' }}
+                                                        <button @click="showModal = true" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg shadow text-xs font-bold animate-pulse"> 
+                                                            Upload Bukti
                                                         </button>
+                                                    @else
+                                                        <span class="text-xs text-orange-500 font-bold bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                                            ⏳ Menunggu Upload
+                                                        </span>
                                                     @endif
 
-                                                {{-- 3. TOMBOL LIHAT BUKTI (ADMIN) --}}
-                                                @elseif($claim->status == 'verified')
-                                                    <div class="flex items-center justify-center gap-2">
-                                                        <span class="text-green-600 text-lg">✅</span>
-                                                        @if(Auth::user()->role === 'admin' && $claim->handover_photo_path)
-                                                            <button @click="showModal = true" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs border border-gray-300 flex items-center gap-1">
-                                                                🖼️ Bukti
-                                                            </button>
-                                                        @endif
-                                                    </div>
+                                                {{-- 4. KASUS MENUNGGU VERIFIKASI ADMIN (Status Verified + Ada Foto + Belum Verif Akhir) --}}
+                                                @elseif($claim->status == 'verified' && $claim->handover_photo_path && !$claim->verified_at)
+                                                    @if(Auth::user()->role === 'admin')
+                                                        <button @click="showModal = true" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg shadow text-xs font-bold animate-pulse">
+                                                            ✅ Verifikasi Akhir
+                                                        </button>
+                                                    @else
+                                                        <div class="flex flex-col items-center">
+                                                            <span class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded">⏳ Cek Admin</span>
+                                                            <button @click="showModal = true" class="text-blue-500 text-[10px] underline mt-1">Lihat Bukti</button>
+                                                        </div>
+                                                    @endif
 
-                                                @elseif($claim->status == 'rejected')
-                                                    <span class="text-red-600 text-lg">❌</span>
+                                                {{-- 5. KASUS PENDING (Awal) --}}
+                                                @elseif($claim->status == 'pending')
+                                                    @if(Auth::id() === $claim->foundItem->user_id)
+                                                        <div class="flex items-center justify-center gap-2">
+                                                            <form action="{{ route('claims.verify', $claim->id) }}" method="POST"> @csrf @method('PATCH') <input type="hidden" name="action" value="approve"> <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg shadow text-xs font-bold"> Terima</button> </form>
+                                                            <form action="{{ route('claims.verify', $claim->id) }}" method="POST" onsubmit="return confirm('Tolak?');"> @csrf @method('PATCH') <input type="hidden" name="action" value="reject"> <button type="submit" class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-lg shadow font-bold">✕</button> </form>
+                                                            <button @click="showModal = true" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-lg shadow font-bold">👁️</button>
+                                                        </div>
+                                                    @else
+                                                        <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded font-bold">Menunggu</span>
+                                                    @endif
                                                 @endif
 
                                                 {{-- ================================================= --}}
@@ -218,8 +241,8 @@
                                                                 </div>
                                                             </div>
 
-                                                            {{-- BAGIAN BAWAH: AKSI --}}
-                                                            @if($claim->status == 'approved' && Auth::id() === $claim->foundItem->user_id)
+                                                            {{-- BAGIAN BAWAH: AKSI BERDASARKAN STATUS VERIFIED --}}
+                                                            @if($claim->status == 'verified' && Auth::id() === $claim->foundItem->user_id && !$claim->handover_photo_path)
                                                                 {{-- Penemu Upload --}}
                                                                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 text-center">
                                                                     <h4 class="font-bold text-blue-800 text-sm mb-2"> Penemu: Upload Bukti Serah Terima</h4>
@@ -231,28 +254,26 @@
                                                                     </form>
                                                                 </div>
 
-                                                            @elseif($claim->status == 'approved' && Auth::user()->role === 'admin')
+                                                            @elseif($claim->status == 'verified' && Auth::user()->role === 'admin' && $claim->handover_photo_path && !$claim->verified_at)
                                                                 {{-- Admin Verifikasi --}}
                                                                 <div class="bg-gray-100 p-4 rounded-lg border border-gray-300 text-center">
-                                                                    @if($claim->handover_photo_path)
-                                                                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">✅ Bukti Ada</span>
-                                                                        <img src="{{ asset('storage/' . $claim->handover_photo_path) }}" class="mt-2 h-40 object-contain mx-auto border rounded bg-white">
-                                                                        <form action="{{ route('claims.verify', $claim->id) }}" method="POST" class="mt-3">
-                                                                            @csrf @method('PATCH')
-                                                                            <input type="hidden" name="action" value="verify">
-                                                                            <button type="submit" class="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded font-bold">✅ Selesaikan Transaksi</button>
-                                                                        </form>
-                                                                    @else
-                                                                        <p class="text-sm font-bold text-red-600"> Menunggu Penemu Upload Bukti...</p>
-                                                                    @endif
+                                                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">✅ Bukti Ada</span>
+                                                                    <img src="{{ asset('storage/' . $claim->handover_photo_path) }}" class="mt-2 h-40 object-contain mx-auto border rounded bg-white">
+                                                                    <form action="{{ route('claims.verify', $claim->id) }}" method="POST" class="mt-3">
+                                                                        @csrf @method('PATCH')
+                                                                        <input type="hidden" name="action" value="verify">
+                                                                        <button type="submit" class="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded font-bold">✅ Selesaikan Transaksi</button>
+                                                                    </form>
                                                                 </div>
-
+                                                            
                                                             @elseif($claim->status == 'verified' && $claim->handover_photo_path)
-                                                                {{-- TAMPILAN BUKTI JIKA SELESAI --}}
+                                                                {{-- TAMPILAN BUKTI (VIEW ONLY) --}}
                                                                 <div class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg text-center border border-green-200">
                                                                     <h4 class="font-bold text-sm mb-2">✅ Bukti Serah Terima</h4>
                                                                     <img src="{{ asset('storage/' . $claim->handover_photo_path) }}" class="h-64 w-full object-contain bg-white rounded border cursor-pointer" onclick="window.open(this.src)">
-                                                                    <p class="text-xs mt-2 text-gray-500">Diverifikasi oleh Admin pada {{ $claim->verified_at }}</p>
+                                                                    @if($claim->verified_at)
+                                                                        <p class="text-xs mt-2 text-gray-500">Diverifikasi oleh Admin pada {{ $claim->verified_at }}</p>
+                                                                    @endif
                                                                 </div>
                                                             @endif
 
@@ -287,7 +308,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             @foreach($myClaims as $myClaim)
                                 <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition relative overflow-hidden">
-                                    <div class="absolute left-0 top-0 bottom-0 w-1.5 {{ $myClaim->status === 'pending' ? 'bg-yellow-400' : ($myClaim->status === 'verified' ? 'bg-green-500' : ($myClaim->status === 'approved' ? 'bg-blue-500' : 'bg-red-500')) }}"></div>
+                                    <div class="absolute left-0 top-0 bottom-0 w-1.5 {{ $myClaim->status === 'pending' ? 'bg-yellow-400' : ($myClaim->status === 'verified' ? 'bg-green-500' : 'bg-red-500') }}"></div>
                                     <div class="pl-4 flex gap-4">
                                         <div class="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden shrink-0 border dark:border-gray-600">
                                             @if($myClaim->foundItem->primaryImage) <img src="{{ asset('storage/' . $myClaim->foundItem->primaryImage->image_path) }}" class="w-full h-full object-cover"> @else <div class="w-full h-full flex items-center justify-center text-xs text-gray-400">No Pic</div> @endif
@@ -296,6 +317,7 @@
                                             <h4 class="font-bold text-gray-800 dark:text-white line-clamp-1">{{ $myClaim->foundItem->item_name }}</h4>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Diajukan: {{ $myClaim->created_at->diffForHumans() }}</p>
                                             <div class="mt-2">
+                                                {{-- LOGIKA: Pending --}}
                                                 @if($myClaim->status === 'pending')
                                                     <div class="flex flex-col items-start gap-2">
                                                         <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded font-bold"> Menunggu Respon</span>
@@ -310,26 +332,28 @@
                                                         @endif
                                                     </div>
 
-                                                {{-- LOGIKA BARU: TAMPILKAN TOMBOL WA JUGA SAAT APPROVED --}}
-                                                @elseif($myClaim->status === 'approved')
+                                                {{-- LOGIKA: Verified (Dulu Approved) --}}
+                                                @elseif($myClaim->status === 'verified')
                                                     <div class="flex flex-col items-start gap-2">
-                                                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-bold">🔹 Disetujui Penemu</span>
-                                                        <span class="text-[10px] text-gray-400 italic">Silakan temui penemu & lakukan serah terima.</span>
-                                                        
-                                                        {{-- TOMBOL WA DI SINI JUGA --}}
-                                                        @if($myClaim->foundItem->phone_number)
-                                                            @php
-                                                                $cleanPhone = preg_replace('/[^0-9]/', '', $myClaim->foundItem->phone_number);
-                                                                if(substr($cleanPhone, 0, 1) == '0') $cleanPhone = '62' . substr($cleanPhone, 1);
-                                                            @endphp
-                                                            <a href="https://wa.me/{{ $cleanPhone }}?text=Halo, saya ingin bertemu untuk mengambil barang {{ $myClaim->foundItem->item_name }}" target="_blank" class="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition shadow-sm mt-1">
-                                                                <span>📞</span> Hubungi Penemu
-                                                            </a>
+                                                        @if(!$myClaim->handover_photo_path)
+                                                            <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-bold">🔹 Disetujui Penemu</span>
+                                                            <span class="text-[10px] text-gray-400 italic">Silakan temui penemu & lakukan serah terima.</span>
+                                                            
+                                                            {{-- TOMBOL WA MUNCUL DI SINI JUGA --}}
+                                                            @if($myClaim->foundItem->phone_number)
+                                                                @php
+                                                                    $cleanPhone = preg_replace('/[^0-9]/', '', $myClaim->foundItem->phone_number);
+                                                                    if(substr($cleanPhone, 0, 1) == '0') $cleanPhone = '62' . substr($cleanPhone, 1);
+                                                                @endphp
+                                                                <a href="https://wa.me/{{ $cleanPhone }}?text=Halo, saya ingin bertemu untuk mengambil barang {{ $myClaim->foundItem->item_name }}" target="_blank" class="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition shadow-sm mt-1">
+                                                                    <span>📞</span> Hubungi Penemu
+                                                                </a>
+                                                            @endif
+                                                        @else
+                                                            <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold">✅ Selesai (Menunggu Admin)</span>
                                                         @endif
                                                     </div>
 
-                                                @elseif($myClaim->status === 'verified')
-                                                    <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold">✅ Selesai</span>
                                                 @else
                                                     <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded font-bold">❌ Ditolak</span>
                                                 @endif

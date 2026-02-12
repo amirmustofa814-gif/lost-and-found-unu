@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Validator;
 
 class FoundItemController extends Controller
 {
-    /**
-     * Menyimpan data barang temuan baru (Store).
-     */
+    
     public function store(Request $request)
     {
         // 1. Validasi Input

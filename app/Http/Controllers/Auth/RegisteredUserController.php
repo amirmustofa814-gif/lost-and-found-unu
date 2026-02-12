@@ -22,49 +22,52 @@ class RegisteredUserController extends Controller
 
  public function store(Request $request)
     {
-        // 1. VALIDASI INPUT //
+        // 1. VALIDASI INPUT (Tambah validasi untuk otp_code)
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'nim' => ['required', 'string', 'max:20', 'unique:'.User::class],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'phone_number' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'otp_code' => ['required', 'numeric'],
         ]);
 
-        // 2. BUAT KODE OTP //
-        $otp = rand(100000, 999999);
+        // Cek Waktu Kadaluarsa DULU
+        if (session('otp_expires_at') && now()->greaterThan(session('otp_expires_at'))) {
+            return back()
+                ->withErrors(['otp_code' => 'Kode OTP sudah kadaluarsa! Silakan kirim ulang.'])
+                ->withInput();
+        }
 
-        // 3. SIMPAN DATA USER //
+        // 2. CEK APAKAH OTP COCOK DENGAN SESI? (Validasi Keamanan)
+        if ($request->otp_code != session('register_otp')) {
+            return back()
+            ->withErrors(['otp_code' => 'Kode OTP Salah! Silakan cek WA lagi.'])
+            ->withInput();
+        }
+
+        // 3. SIMPAN DATA USER (Langsung Verified)
         $user = User::create([
             'name' => $request->name,
             'nim' => $request->nim,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
-            'otp_code' => $otp,
+            'otp_code' => null, 
             'password' => Hash::make($request->password),
             'role' => 'mahasiswa',
+            'email_verified_at' => now(),
         ]);
 
-        // 4. FORMAT NOMOR HP //
-        $nomor_hp = $this->formatNomorHp($request->phone_number);
-
-        // 5. KIRIM PESAN WA (FINAL & RAPI) //
-        try {
-            Http::post('http://localhost:3000/send/message', [
-                'phone' => $nomor_hp,
-                'message' => "Halo {$user->name}, Kode Verifikasi Anda: *{$otp}*",
-            ]);
-        } catch (\Exception $e) {
-            // Kalau gagal, catat di log saja //
-            \Log::error('Gagal WA: ' . $e->getMessage());
-        }
+        // (Bagian Kirim WA dihapus karena sudah dikirim via AJAX sebelumnya)
 
         event(new Registered($user));
+        
+        // Hapus data sesi OTP (biar bersih)
+        session()->forget(['register_otp', 'register_phone', 'otp_expires_at']);
 
-        Auth::login($user);
-
-        // Redirect ke halaman Input OTP //
-        return view('auth.verify-otp-inline', ['user' => $user]);
+        // Redirect ke Halaman Login dengan Pesan Sukses
+        return redirect()->route('login')
+            ->with('status', 'Registrasi Berhasil! Silakan Masuk.');
     }
     // Fungsi Kecil untuk mengubah 0812... jadi 62812... //
     private function formatNomorHp($nomor)

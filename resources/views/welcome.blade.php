@@ -67,17 +67,17 @@
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     @auth
                         <a href="{{ route('lost.create') }}" class="w-full sm:w-auto px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-red-200 transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                            🔍 Saya Kehilangan Barang
+                             Saya Kehilangan Barang
                         </a>
                         <a href="{{ route('found.create') }}" class="w-full sm:w-auto px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-green-200 transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                            📦 Saya Menemukan Barang
+                            Saya Menemukan Barang
                         </a>
                     @else
                         <a href="{{ route('login') }}" class="w-full sm:w-auto px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-red-200 transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                            🔍 Saya Kehilangan Barang
+                             Saya Kehilangan Barang
                         </a>
                         <a href="{{ route('login') }}" class="w-full sm:w-auto px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-green-200 transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                            📦 Saya Menemukan Barang
+                           Saya Menemukan Barang
                         </a>
                     @endauth
                 </div>
